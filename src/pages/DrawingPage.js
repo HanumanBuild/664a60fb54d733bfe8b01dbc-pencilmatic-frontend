@@ -17,7 +17,7 @@ const DrawingPage = () => {
   }, []);
 
   const saveDrawing = async () => {
-    const drawingData = canvas.toDataURL();
+    const drawingData = JSON.stringify(canvas.toJSON());
     try {
       const token = localStorage.getItem('token');
       await axios.post(`${process.env.REACT_APP_PENCILMATIC_BACKEND_URL}/api/drawings/save`, { drawingData }, {
@@ -30,6 +30,31 @@ const DrawingPage = () => {
       console.error('Error saving drawing', error);
     }
   };
+
+  const loadDrawings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${process.env.REACT_APP_PENCILMATIC_BACKEND_URL}/api/drawings/retrieve`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (response.data.length > 0) {
+        const lastDrawing = response.data[response.data.length - 1];
+        canvas.loadFromJSON(lastDrawing.drawingData, () => {
+          canvas.renderAll();
+        });
+      }
+    } catch (error) {
+      console.error('Error loading drawings', error);
+    }
+  };
+
+  useEffect(() => {
+    if (canvas) {
+      loadDrawings();
+    }
+  }, [canvas]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
